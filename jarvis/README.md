@@ -18,7 +18,15 @@ Alle Daten liegen in einer SQLite-Datenbank auf deinem Computer und bleiben nach
 
 - **Python 3.10 oder neuer** ([python.org](https://www.python.org/downloads/) – unter Windows beim Installieren „Add Python to PATH“ anhaken)
 
-## Installation (einmalig)
+## Schnellstart per Doppelklick
+
+- **Windows:** `start-windows.bat` doppelt anklicken
+- **macOS:** `start-mac-linux.command` doppelt anklicken (beim ersten Mal: Rechtsklick → Öffnen)
+
+Beim ersten Start wird alles automatisch eingerichtet (dauert ca. 1 Minute). Danach öffnet sich JARVIS im Browser.
+Das Fenster mit dem schwarzen Terminal muss offen bleiben, solange du JARVIS benutzt.
+
+## Installation von Hand (einmalig)
 
 Im Terminal (Windows: „Eingabeaufforderung“ oder PowerShell) in den Ordner `jarvis` wechseln:
 
