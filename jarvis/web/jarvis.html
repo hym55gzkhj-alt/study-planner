@@ -1,0 +1,1167 @@
+<title>JARVIS</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#03060d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* ==========================================================================
+   JARVIS · Futuristisches HUD-Design (Dark Mode)
+   ========================================================================== */
+:root {
+  color-scheme: dark;
+  --bg: #02050b;
+  --bg-2: #050f22;
+  --panel: rgba(7, 20, 42, 0.62);
+  --panel-solid: #071429;
+  --panel-hi: rgba(10, 32, 64, 0.75);
+  --line: rgba(0, 229, 255, 0.16);
+  --line-hi: rgba(0, 229, 255, 0.45);
+  --cyan: #00e5ff;
+  --cyan-2: #38bdf8;
+  --cyan-dim: rgba(0, 229, 255, 0.12);
+  --text: #dcf7ff;
+  --text-2: #9fc3d9;
+  --muted: #5f7f99;
+  --ok: #3dffb0;
+  --warn: #ffbe55;
+  --danger: #ff5577;
+  --radius: 14px;
+  --font-hud: "Orbitron", "Rajdhani", system-ui, sans-serif;
+  --font-ui: "Rajdhani", "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --glow: 0 0 18px rgba(0, 229, 255, 0.35);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+html { background: var(--bg); }
+body {
+  background: radial-gradient(1200px 700px at 75% -10%, #0a2a52 0%, transparent 60%),
+              radial-gradient(900px 600px at -10% 110%, #06213f 0%, transparent 55%),
+              linear-gradient(180deg, var(--bg-2), var(--bg));
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--cyan); text-decoration: none; }
+[hidden] { display: none !important; }
+::selection { background: rgba(0, 229, 255, 0.3); }
+
+/* ---------- Hintergrund-Effekte ---------- */
+.bg-grid, .bg-glow, .bg-scan { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(0, 229, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 255, 0.045) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse at 60% 30%, #000 20%, transparent 75%);
+}
+.bg-glow {
+  background: radial-gradient(500px 300px at 85% 15%, rgba(0, 229, 255, 0.08), transparent 70%);
+  animation: glowDrift 14s ease-in-out infinite alternate;
+}
+.bg-scan::after {
+  content: ""; position: absolute; left: 0; right: 0; height: 120px;
+  background: linear-gradient(180deg, transparent, rgba(0, 229, 255, 0.05), transparent);
+  animation: scan 9s linear infinite;
+}
+@keyframes scan { from { top: -120px; } to { top: 100%; } }
+@keyframes glowDrift { from { transform: translate(0, 0); } to { transform: translate(-6%, 8%); } }
+
+/* ---------- Layout ---------- */
+.shell { position: relative; z-index: 1; display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+.sidebar {
+  position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 28px;
+  padding: 26px 18px; border-right: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(3, 10, 22, 0.85), rgba(3, 8, 18, 0.6));
+  backdrop-filter: blur(10px);
+}
+.main { padding: 26px clamp(16px, 3vw, 40px) 60px; min-width: 0; }
+
+/* ---------- Marke / Reaktor ---------- */
+.brand { display: flex; align-items: center; gap: 12px; color: var(--text); }
+.brand-text b { display: block; font-family: var(--font-hud); font-size: 17px; letter-spacing: 0.18em; color: var(--cyan); text-shadow: var(--glow); }
+.brand-text small { display: block; font-family: var(--font-ui); color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; font-size: 11px; }
+.reactor { position: relative; width: 42px; height: 42px; flex: none; }
+.reactor i { position: absolute; inset: 0; border-radius: 50%; border: 2px solid transparent; }
+.reactor i:nth-child(1) { border-top-color: var(--cyan); border-bottom-color: var(--cyan); animation: spin 3.2s linear infinite; box-shadow: var(--glow); }
+.reactor i:nth-child(2) { inset: 7px; border-left-color: var(--cyan-2); border-right-color: var(--cyan-2); animation: spin 2.2s linear infinite reverse; }
+.reactor i:nth-child(3) { inset: 15px; background: radial-gradient(circle, #e9fdff 0%, var(--cyan) 45%, transparent 75%); animation: pulse 2.4s ease-in-out infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%, 100% { opacity: 0.75; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.08); } }
+
+/* ---------- Navigation ---------- */
+.nav { display: flex; flex-direction: column; gap: 4px; }
+.nav a {
+  position: relative; display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 10px;
+  color: var(--text-2); font-family: var(--font-ui); font-weight: 600; font-size: 16px; letter-spacing: 0.04em;
+  border: 1px solid transparent; transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.nav a svg { width: 20px; height: 20px; fill: currentColor; flex: none; }
+.nav a:hover:not(.soon) { color: var(--text); background: var(--cyan-dim); }
+.nav a.active { color: var(--cyan); background: linear-gradient(90deg, rgba(0, 229, 255, 0.16), transparent); border-color: var(--line); }
+.nav a.active::before { content: ""; position: absolute; left: -18px; top: 8px; bottom: 8px; width: 3px; border-radius: 3px; background: var(--cyan); box-shadow: var(--glow); }
+.nav a.soon { opacity: 0.45; cursor: not-allowed; }
+.nav a em { margin-left: auto; font-style: normal; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; }
+.sys-status { margin-top: auto; display: flex; align-items: center; gap: 10px; font-family: var(--font-ui); font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+.dot.online { background: var(--ok); box-shadow: 0 0 10px var(--ok); animation: pulse 2s infinite; }
+.dot.offline { background: var(--danger); box-shadow: 0 0 10px var(--danger); }
+
+/* ---------- Topbar ---------- */
+.topbar { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+.eyebrow { font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 0.28em; font-size: 12px; color: var(--cyan); opacity: 0.85; }
+.topbar h1 { margin: 2px 0 0; font-family: var(--font-hud); font-weight: 700; font-size: clamp(22px, 3vw, 30px); letter-spacing: 0.08em; }
+.clock { text-align: right; font-family: var(--font-hud); }
+.clock span { display: block; font-size: 26px; color: var(--cyan); text-shadow: var(--glow); letter-spacing: 0.1em; }
+.clock small { font-family: var(--font-ui); color: var(--text-2); letter-spacing: 0.08em; font-size: 13px; }
+
+/* ---------- Panels ---------- */
+.view { animation: viewIn 0.45s cubic-bezier(.2, .8, .2, 1); }
+@keyframes viewIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.grid { display: grid; gap: 18px; grid-template-columns: repeat(12, minmax(0, 1fr)); }
+.span-12 { grid-column: span 12; } .span-8 { grid-column: span 8; } .span-7 { grid-column: span 7; }
+.span-6 { grid-column: span 6; } .span-5 { grid-column: span 5; } .span-4 { grid-column: span 4; } .span-3 { grid-column: span 3; }
+
+.panel {
+  position: relative; padding: 20px; border-radius: var(--radius); border: 1px solid var(--line);
+  background: linear-gradient(160deg, var(--panel-hi), var(--panel));
+  backdrop-filter: blur(12px); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  opacity: 0; animation: panelIn 0.6s cubic-bezier(.2, .8, .2, 1) forwards;
+}
+.panel::before, .panel::after { content: ""; position: absolute; width: 14px; height: 14px; border: 2px solid var(--cyan); opacity: 0.7; }
+.panel::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; border-top-left-radius: var(--radius); }
+.panel::after { bottom: -1px; right: -1px; border-left: 0; border-top: 0; border-bottom-right-radius: var(--radius); }
+@keyframes panelIn { from { opacity: 0; transform: translateY(14px) scale(0.99); } to { opacity: 1; transform: none; } }
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.panel-head h2 { margin: 0; font-family: var(--font-ui); font-size: 15px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--text-2); font-weight: 700; }
+.panel-head h2::before { content: "▍"; color: var(--cyan); margin-right: 6px; }
+.panel-head .meta { font-family: var(--font-ui); color: var(--muted); font-size: 13px; letter-spacing: 0.06em; }
+
+/* ---------- Hero ---------- */
+.hero { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: center; padding: 26px; overflow: hidden; }
+.hero::selection { background: none; }
+.hero-text h2 { margin: 0 0 6px; font-family: var(--font-hud); font-size: clamp(20px, 2.6vw, 30px); letter-spacing: 0.04em; }
+.hero-text h2 .accent { color: var(--cyan); text-shadow: var(--glow); }
+.hero-text p { margin: 0 0 18px; color: var(--text-2); max-width: 60ch; }
+.typed::after { content: "▌"; color: var(--cyan); animation: blink 1s steps(1) infinite; margin-left: 2px; }
+@keyframes blink { 50% { opacity: 0; } }
+.next-exam { display: flex; flex-wrap: wrap; gap: 10px 22px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: rgba(0, 229, 255, 0.04); }
+.next-exam .label { font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 0.2em; font-size: 11px; color: var(--muted); display: block; }
+.next-exam .value { font-family: var(--font-ui); font-weight: 700; font-size: 20px; letter-spacing: 0.03em; }
+
+/* Countdown-Ring */
+.ring { position: relative; width: 170px; height: 170px; flex: none; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+.ring .track { fill: none; stroke: rgba(0, 229, 255, 0.1); stroke-width: 8; }
+.ring .bar { fill: none; stroke: var(--cyan); stroke-width: 8; stroke-linecap: round; filter: drop-shadow(0 0 6px var(--cyan)); transition: stroke-dashoffset 1.4s cubic-bezier(.2, .8, .2, 1); }
+.ring .ticks { fill: none; stroke: rgba(0, 229, 255, 0.35); stroke-width: 2; stroke-dasharray: 1 7.3; }
+.ring .spinner { fill: none; stroke: var(--cyan-2); stroke-width: 1.5; stroke-dasharray: 30 260; opacity: 0.7; transform-origin: 50% 50%; animation: spin 6s linear infinite; }
+.ring-center { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.ring-center b { font-family: var(--font-hud); font-size: 44px; line-height: 1; color: var(--text); text-shadow: var(--glow); }
+.ring-center small { font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 0.22em; color: var(--muted); font-size: 11px; margin-top: 6px; }
+.ring.sm { width: 120px; height: 120px; }
+.ring.sm .ring-center b { font-size: 28px; }
+.ring.urgent .bar { stroke: var(--warn); filter: drop-shadow(0 0 6px var(--warn)); }
+
+/* ---------- Kennzahlen ---------- */
+.stat { padding: 16px 18px; }
+.stat .label { font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 0.18em; font-size: 12px; color: var(--muted); }
+.stat .value { font-family: var(--font-hud); font-size: 28px; margin-top: 4px; color: var(--text); }
+.stat .value small { font-family: var(--font-ui); font-size: 14px; color: var(--text-2); margin-left: 4px; letter-spacing: 0.05em; }
+.stat .hint { font-size: 12.5px; color: var(--text-2); margin-top: 2px; }
+.stat .spark { position: absolute; right: 14px; top: 14px; width: 28px; height: 28px; fill: none; stroke: var(--cyan); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: 0.55; }
+
+/* ---------- Aufgaben ---------- */
+.tasks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.task { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line); background: rgba(2, 10, 22, 0.45); transition: border-color 0.2s, background 0.2s, opacity 0.3s; }
+.task:hover { border-color: var(--line-hi); }
+.task.done { opacity: 0.55; }
+.task.done .task-title { text-decoration: line-through; text-decoration-color: var(--cyan); }
+.task.break { border-style: dashed; background: transparent; }
+.task-title { font-weight: 600; }
+.task-sub { font-size: 12.5px; color: var(--text-2); }
+.task-min { font-family: var(--font-ui); font-weight: 700; color: var(--cyan); letter-spacing: 0.05em; }
+.check { appearance: none; width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--line-hi); cursor: pointer; display: grid; place-content: center; transition: background 0.2s, box-shadow 0.2s; }
+.check::after { content: ""; width: 10px; height: 6px; border-left: 2px solid #001018; border-bottom: 2px solid #001018; transform: rotate(-45deg) scale(0); transition: transform 0.2s; margin-top: -2px; }
+.check:checked { background: var(--cyan); box-shadow: var(--glow); }
+.check:checked::after { transform: rotate(-45deg) scale(1); }
+.check:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+/* ---------- Klausur-Zeitleiste ---------- */
+.timeline { list-style: none; margin: 0; padding: 0; position: relative; }
+.timeline::before { content: ""; position: absolute; left: 7px; top: 6px; bottom: 6px; width: 2px; background: linear-gradient(var(--cyan), transparent); opacity: 0.4; }
+.timeline li { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 8px 0 12px 28px; }
+.timeline li::before { content: ""; position: absolute; left: 2px; top: 13px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--cyan); background: var(--bg); }
+.timeline li:first-child::before { background: var(--cyan); box-shadow: var(--glow); }
+.timeline .subj { font-family: var(--font-ui); font-weight: 700; font-size: 17px; letter-spacing: 0.03em; }
+.timeline .when { font-size: 13px; color: var(--text-2); }
+.badge { align-self: start; font-family: var(--font-ui); font-weight: 700; font-size: 13px; letter-spacing: 0.06em; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line-hi); color: var(--cyan); background: var(--cyan-dim); white-space: nowrap; }
+.badge.soon { color: var(--warn); border-color: rgba(255, 190, 85, 0.5); background: rgba(255, 190, 85, 0.1); }
+.badge.today { color: #001018; background: var(--warn); border-color: var(--warn); }
+.badge.muted { color: var(--muted); border-color: var(--line); background: transparent; }
+
+/* ---------- Fortschritt ---------- */
+.progress-wrap { display: grid; grid-template-columns: auto 1fr; gap: 22px; align-items: center; }
+.bars { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.bar-row .bar-label { display: flex; justify-content: space-between; gap: 8px; font-size: 13.5px; margin-bottom: 5px; }
+.bar-row .bar-label span:last-child { color: var(--text-2); font-family: var(--font-ui); font-weight: 600; }
+.meter { height: 7px; border-radius: 99px; background: rgba(0, 229, 255, 0.08); overflow: hidden; }
+.meter > i { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--cyan-2), var(--cyan)); box-shadow: 0 0 10px var(--cyan); transition: width 1.2s cubic-bezier(.2, .8, .2, 1); }
+
+/* Wochenbalken */
+.week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; align-items: end; height: 140px; }
+.week .col { display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
+.week .col i { width: 100%; max-width: 30px; min-height: 3px; border-radius: 6px 6px 2px 2px; background: linear-gradient(180deg, var(--cyan), rgba(56, 189, 248, 0.25)); box-shadow: 0 0 12px rgba(0, 229, 255, 0.25); height: 0; transition: height 1s cubic-bezier(.2, .8, .2, 1); }
+.week .col.today i { background: linear-gradient(180deg, #fff, var(--cyan)); }
+.week .col span { font-family: var(--font-ui); font-size: 12px; color: var(--muted); letter-spacing: 0.08em; }
+.week .col.today span { color: var(--cyan); }
+
+/* ---------- Leerzustand / Hinweise ---------- */
+.empty { display: grid; place-items: center; text-align: center; gap: 10px; padding: 22px 10px; color: var(--text-2); }
+.empty svg { width: 44px; height: 44px; fill: none; stroke: var(--cyan); stroke-width: 1.5; opacity: 0.7; }
+.alert { display: flex; gap: 10px; align-items: flex-start; padding: 10px 14px; border-radius: 10px; margin-bottom: 12px; font-size: 13.5px; border: 1px solid rgba(255, 190, 85, 0.4); background: rgba(255, 190, 85, 0.08); color: #ffe2b0; }
+
+/* ---------- Buttons & Formulare ---------- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 18px; border-radius: 10px; border: 1px solid var(--line-hi); background: rgba(0, 229, 255, 0.08); color: var(--cyan); font-family: var(--font-ui); font-weight: 700; font-size: 15px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: background 0.2s, box-shadow 0.2s, transform 0.1s; }
+.btn:hover { background: rgba(0, 229, 255, 0.18); box-shadow: var(--glow); }
+.btn:active { transform: translateY(1px); }
+.btn.primary { background: linear-gradient(135deg, var(--cyan), var(--cyan-2)); color: #001520; border-color: transparent; }
+.btn.primary:hover { box-shadow: 0 0 24px rgba(0, 229, 255, 0.55); }
+.btn.ghost { background: transparent; border-color: var(--line); color: var(--text-2); }
+.btn.danger { color: var(--danger); border-color: rgba(255, 85, 119, 0.45); background: rgba(255, 85, 119, 0.06); }
+.btn.sm { padding: 6px 10px; font-size: 12.5px; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn:focus-visible, .field input:focus-visible, .field select:focus-visible, .field textarea:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+.form { display: grid; gap: 14px; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.field { display: flex; flex-direction: column; gap: 6px; grid-column: span 3; min-width: 0; }
+.field.full { grid-column: 1 / -1; } .field.third { grid-column: span 2; }
+.field label { font-family: var(--font-ui); font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-2); }
+.field input, .field select, .field textarea { width: 100%; padding: 11px 13px; border-radius: 10px; border: 1px solid var(--line); background: rgba(1, 8, 18, 0.7); color: var(--text); transition: border-color 0.2s, box-shadow 0.2s; }
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.12); outline: none; }
+.field textarea { resize: vertical; min-height: 70px; }
+.field small { color: var(--muted); font-size: 12px; }
+.field input[type="range"] { padding: 0; accent-color: var(--cyan); background: none; border: 0; }
+.form-actions { grid-column: 1 / -1; display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+
+/* ---------- Tabelle ---------- */
+.table-wrap { overflow-x: auto; }
+table.data { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.data th { text-align: left; font-family: var(--font-ui); font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--line); }
+table.data td { padding: 11px 10px; border-bottom: 1px solid rgba(0, 229, 255, 0.07); vertical-align: middle; }
+table.data tr.past td { opacity: 0.45; }
+table.data td { white-space: nowrap; }
+table.data td:first-child { white-space: normal; min-width: 120px; }
+table.data td.actions { text-align: right; }
+table.data td.actions .btn + .btn { margin-left: 6px; }
+.stars { color: var(--cyan); letter-spacing: 2px; }
+.stars .off { color: rgba(0, 229, 255, 0.2); }
+
+/* ---------- Toasts ---------- */
+.toasts { position: fixed; right: 18px; bottom: 18px; z-index: 50; display: flex; flex-direction: column; gap: 8px; }
+.toast { padding: 12px 16px; border-radius: 10px; border: 1px solid var(--line-hi); background: var(--panel-solid); box-shadow: var(--glow); font-size: 14px; animation: toastIn 0.3s ease-out; max-width: 340px; }
+.toast.error { border-color: var(--danger); box-shadow: 0 0 18px rgba(255, 85, 119, 0.35); }
+@keyframes toastIn { from { opacity: 0; transform: translateY(10px); } }
+
+/* Lade-Skelett */
+.skeleton { height: 14px; border-radius: 6px; background: linear-gradient(90deg, rgba(0, 229, 255, 0.05), rgba(0, 229, 255, 0.14), rgba(0, 229, 255, 0.05)); background-size: 200% 100%; animation: shimmer 1.4s infinite; margin: 8px 0; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px) {
+  .span-8, .span-7, .span-6, .span-5, .span-4 { grid-column: span 12; }
+  .span-3 { grid-column: span 6; }
+}
+@media (max-width: 820px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed; top: auto; bottom: 0; left: 0; right: 0; height: auto; z-index: 20; flex-direction: row;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); border-right: 0; border-top: 1px solid var(--line);
+    background: rgba(3, 8, 18, 0.92);
+  }
+  .brand, .sys-status { display: none; }
+  .nav { flex-direction: row; width: 100%; justify-content: space-around; }
+  .nav a { flex-direction: column; gap: 2px; padding: 6px 4px; font-size: 11px; letter-spacing: 0.06em; flex: 1; }
+  .nav a.active::before { left: 25%; right: 25%; top: -7px; bottom: auto; width: auto; height: 3px; }
+  .nav a em { display: none; }
+  .main { padding: 18px 16px 96px; }
+  .hero { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  .hero-text p { margin-inline: auto; }
+  .next-exam { justify-content: center; }
+  .ring { width: 150px; height: 150px; order: -1; }
+  .progress-wrap { grid-template-columns: 1fr; justify-items: center; }
+  .progress-wrap .bars { width: 100%; }
+  .field, .field.third { grid-column: 1 / -1; }
+  .clock span { font-size: 20px; }
+}
+@media (max-width: 480px) {
+  .span-3 { grid-column: span 12; }
+  .topbar { align-items: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  .panel { opacity: 1; }
+}
+
+/* ==========================================================================
+   KI-Lernpartner (Chat)
+   ========================================================================== */
+.chat-main { display: flex; flex-direction: column; height: calc(100vh - 150px); min-height: 520px; padding-bottom: 14px; }
+.chat-log { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 4px 4px 12px; scroll-behavior: smooth; }
+.msg { display: flex; gap: 10px; align-items: flex-start; max-width: 88%; animation: msgIn 0.35s cubic-bezier(.2, .8, .2, 1); }
+@keyframes msgIn { from { opacity: 0; transform: translateY(8px); } }
+.msg.user { align-self: flex-end; flex-direction: row-reverse; }
+.msg-body { padding: 11px 15px; border-radius: 14px; border: 1px solid var(--line); background: rgba(2, 12, 26, 0.7); line-height: 1.55; overflow-wrap: anywhere; min-width: 0; }
+.msg.user .msg-body { background: linear-gradient(135deg, rgba(0, 229, 255, 0.2), rgba(56, 189, 248, 0.12)); border-color: var(--line-hi); border-top-right-radius: 4px; }
+.msg.assistant .msg-body { border-top-left-radius: 4px; }
+.msg.error .msg-body { border-color: rgba(255, 85, 119, 0.5); }
+.msg-body p { margin: 0 0 8px; } .msg-body p:last-child { margin-bottom: 0; }
+.msg-body ul, .msg-body ol { margin: 4px 0 8px; padding-left: 20px; }
+.msg-body li { margin: 2px 0; }
+.msg-body h4 { margin: 10px 0 6px; font-family: var(--font-ui); font-size: 16px; letter-spacing: 0.05em; color: var(--cyan); }
+.msg-body strong { color: #fff; }
+.msg-body code { font-family: ui-monospace, Consolas, monospace; font-size: 0.9em; padding: 1px 5px; border-radius: 5px; background: rgba(0, 229, 255, 0.1); }
+.msg-body hr { border: 0; border-top: 1px solid var(--line); margin: 10px 0; }
+.avatar { position: relative; width: 30px; height: 30px; flex: none; margin-top: 4px; }
+.avatar i { position: absolute; inset: 0; border-radius: 50%; border: 2px solid transparent; border-top-color: var(--cyan); border-bottom-color: var(--cyan); animation: spin 4s linear infinite; }
+.avatar i:last-child { inset: 9px; border: 0; background: var(--cyan); box-shadow: var(--glow); animation: pulse 2.4s infinite; }
+.msg.typing .avatar i:first-child { animation-duration: 0.9s; }
+.dots { display: inline-flex; gap: 5px; padding: 4px 0; }
+.dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--cyan); opacity: 0.3; animation: dot 1.2s infinite; }
+.dots i:nth-child(2) { animation-delay: 0.2s; } .dots i:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dot { 50% { opacity: 1; transform: translateY(-3px); } }
+.chat-bar { display: flex; gap: 10px; align-items: flex-end; padding-top: 12px; border-top: 1px solid var(--line); }
+.chat-input { flex: 1; resize: none; min-height: 46px; max-height: 160px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: rgba(1, 8, 18, 0.8); color: var(--text); line-height: 1.4; }
+.chat-input:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.12); }
+.btn.send { width: 46px; height: 46px; padding: 0; font-size: 18px; }
+.modes { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+.mode { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: rgba(2, 10, 22, 0.5); color: var(--text-2); cursor: pointer; font-family: var(--font-ui); font-weight: 600; font-size: 15px; letter-spacing: 0.03em; transition: all 0.2s; }
+.mode:hover { border-color: var(--line-hi); color: var(--text); }
+.mode.active { border-color: var(--cyan); color: var(--cyan); background: rgba(0, 229, 255, 0.1); box-shadow: inset 0 0 12px rgba(0, 229, 255, 0.15); }
+.mode-icon { font-size: 16px; }
+.mode-hint { color: var(--text-2); font-size: 13.5px; margin: 10px 0 14px; min-height: 2.6em; }
+.quick { display: flex; flex-direction: column; gap: 6px; }
+.chip { text-align: left; padding: 9px 12px; border-radius: 10px; border: 1px dashed var(--line-hi); background: transparent; color: var(--text-2); cursor: pointer; font-size: 13.5px; transition: all 0.2s; }
+.chip:hover { color: var(--cyan); border-style: solid; background: var(--cyan-dim); }
+.ai-status { display: flex; gap: 10px; align-items: flex-start; margin-top: 18px; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255, 190, 85, 0.35); background: rgba(255, 190, 85, 0.06); font-size: 12.5px; color: #ffe2b0; }
+.ai-status.on { border-color: rgba(61, 255, 176, 0.35); background: rgba(61, 255, 176, 0.06); color: #c8ffe8; }
+.ai-status .dot { margin-top: 4px; flex: none; }
+@media (max-width: 1100px) {
+  .chat-grid .chat-side { order: -1; }
+  .chat-main { height: 70vh; }
+}
+@media (max-width: 820px) {
+  .chat-main { height: calc(100vh - 210px); min-height: 420px; }
+  .msg { max-width: 96%; }
+  .quick { flex-direction: row; overflow-x: auto; padding-bottom: 4px; }
+  .chip { white-space: nowrap; }
+}
+.hero-cta { margin-left: auto; align-self: center; }
+@media (max-width: 820px) { .hero-cta { margin: 6px auto 0; width: 100%; } }
+@media (max-width: 820px) {
+  .chat-side { padding: 14px; }
+  .chat-side > .panel-head { display: none; }
+  .modes { display: flex; overflow-x: auto; gap: 6px; padding-bottom: 4px; scrollbar-width: none; }
+  .mode { flex: none; padding: 8px 12px; font-size: 14px; }
+  .mode-hint { display: none; }
+  .chat-side .field { margin-top: 10px; flex-direction: row; align-items: center; gap: 10px; }
+  .chat-side .field select { padding: 8px 10px; }
+  .quick { margin-top: 10px; }
+  .ai-status { margin-top: 10px; padding: 7px 10px; font-size: 12px; }
+  .topbar h1 { font-size: 20px; }
+  .clock small { display: none; }
+}
+
+:root { color-scheme: dark; }
+.main { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 26px 60px; }
+@media (min-width: 821px) { .main { padding-left: max(32px, env(safe-area-inset-left, 0px)); padding-right: max(32px, env(safe-area-inset-right, 0px)); } }
+@media (max-width: 820px) {
+  .main { padding-block: 18px 110px; }
+  .sidebar { padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px)); padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)); }
+}
+.confirm-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.import-list { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.import-item { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: rgba(2, 10, 22, 0.45); cursor: pointer; }
+.import-item.warn { border-color: rgba(255, 190, 85, 0.35); }
+.import-item small { display: block; color: var(--text-2); font-size: 12.5px; }
+.import-item small.warn { color: var(--warn); }
+.plan-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.sync { font-family: var(--font-ui); font-size: 12px; letter-spacing: 0.08em; color: var(--muted); }
+
+</style>
+<div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-glow" aria-hidden="true"></div>
+  <div class="bg-scan" aria-hidden="true"></div>
+
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="brand" href="#dashboard" aria-label="JARVIS Dashboard">
+        <span class="reactor" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="brand-text"><b>J.A.R.V.I.S</b><small>Klausurassistent</small></span>
+      </a>
+      <nav class="nav" aria-label="Hauptnavigation">
+        <a href="#dashboard" data-view="dashboard"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3zm10 8h8V11h-8zM3 21h8v-6H3zm10-18v6h8V3z"/></svg><span>Dashboard</span></a>
+        <a href="#klausuren" data-view="klausuren"><svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 16H5V9h14zM7 11h5v5H7z"/></svg><span>Klausuren</span></a>
+        <a href="#lernen" data-view="lernen"><svg viewBox="0 0 24 24"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM6 9h12v2H6zm8 5H6v-2h8zm4-6H6V6h12z"/></svg><span>KI-Lernen</span></a>
+        <a href="#einstellungen" data-view="einstellungen"><svg viewBox="0 0 24 24"><path d="M19.4 13a7.7 7.7 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.3 7.3 0 0 0-1.7-1L15 3h-4l-.4 2.7a7.3 7.3 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.7 7.7 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.3 7.3 0 0 0 1.7 1L11 21h4l.4-2.7a7.3 7.3 0 0 0 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg><span>Einstellungen</span></a>
+      </nav>
+      <div class="sys-status">
+        <span class="dot" id="status-dot"></span>
+        <span id="status-text">Verbinde …</span>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-title">
+          <span class="eyebrow" id="view-eyebrow">Systemübersicht</span>
+          <h1 id="view-title">Dashboard</h1>
+        </div>
+        <div class="clock" aria-live="off">
+          <span id="clock-time">--:--</span>
+          <small id="clock-date"></small>
+        </div>
+      </header>
+
+      <section id="view-dashboard" class="view" hidden></section>
+      <section id="view-klausuren" class="view" hidden></section>
+      <section id="view-lernen" class="view" hidden></section>
+      <section id="view-einstellungen" class="view" hidden></section>
+    </main>
+  </div>
+
+  <div id="toasts" class="toasts" role="status" aria-live="polite"></div>
+
+  <script>
+'use strict';
+/* =====================================================================
+   JARVIS · Web-Version (läuft komplett im Browser)
+   Speicherung: claude.use("db") pro Person, sonst localStorage.
+   KI: claude.use("sample"), sonst Offline-Antworten aus den eigenen Daten.
+   ===================================================================== */
+
+// ---------------- Helfer ----------------
+function h(tag, attrs, ...children) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v === false || v == null) continue;
+    if (k === 'class') el.className = v;
+    else if (k === 'dataset') Object.assign(el.dataset, v);
+    else if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2), v);
+    else if (k === 'style' && typeof v === 'object') for (const [p, val] of Object.entries(v)) el.style.setProperty(p, val);
+    else if (k === 'value') el.value = v;
+    else if (v === true) el.setAttribute(k, '');
+    else el.setAttribute(k, String(v));
+  }
+  for (const c of children.flat(Infinity)) {
+    if (c == null || c === false) continue;
+    el.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  }
+  return el;
+}
+const SVG_NS = 'http://www.w3.org/2000/svg';
+function svg(tag, attrs, ...children) {
+  const el = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) el.setAttribute(k, String(v));
+  children.forEach((c) => el.append(c));
+  return el;
+}
+function icon(paths, cls) { return svg('svg', { viewBox: '0 0 24 24', class: cls || '' }, ...paths.map((d) => svg('path', { d }))); }
+function toast(msg, type) {
+  const t = h('div', { class: `toast ${type || ''}` }, msg);
+  document.getElementById('toasts').append(t);
+  setTimeout(() => t.remove(), 3800);
+}
+const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+const pad = (n) => String(n).padStart(2, '0');
+const isoDate = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseISO = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const todayISO = () => isoDate(new Date());
+const addDays = (iso, n) => { const d = parseISO(iso); d.setDate(d.getDate() + n); return isoDate(d); };
+const daysBetween = (a, b) => Math.round((parseISO(b) - parseISO(a)) / 86400000);
+const nowStamp = () => { const d = new Date(); return `${isoDate(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const fmtLong = new Intl.DateTimeFormat('de-DE', { weekday: 'long', day: 'numeric', month: 'long' });
+const fmtShort = new Intl.DateTimeFormat('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' });
+const fmtDay = new Intl.DateTimeFormat('de-DE', { weekday: 'short' });
+const dateLong = (iso) => fmtLong.format(parseISO(iso));
+const dateShort = (iso) => fmtShort.format(parseISO(iso));
+const weekday = (iso) => fmtDay.format(parseISO(iso)).replace('.', '');
+const daysLabel = (n) => (n === 0 ? 'Heute' : n === 1 ? 'Morgen' : n < 0 ? `vor ${-n} T.` : `in ${n} Tagen`);
+const minutes = (m) => (m < 60 ? `${m} min` : m % 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m / 60} h`);
+const timeAdd = (hhmm, mins) => { const [a, b] = hhmm.split(':').map(Number); const t = a * 60 + b + mins; return `${pad(Math.floor(t / 60) % 24)}:${pad(t % 60)}`; };
+const clean = (s, max) => String(s ?? '').replace(/[\u0000-\u0009\u000B-\u001F]/g, '').trim().slice(0, max);
+
+function ring({ value, max, center, caption, size, urgent }) {
+  const r = 52, c = 2 * Math.PI * r;
+  const pct = max > 0 ? Math.max(0, Math.min(1, value / max)) : 0;
+  const bar = svg('circle', { class: 'bar', cx: 60, cy: 60, r, 'stroke-dasharray': c, 'stroke-dashoffset': c });
+  const el = h('div', { class: `ring ${size || ''} ${urgent ? 'urgent' : ''}`, role: 'img', 'aria-label': `${center} ${caption}` },
+    svg('svg', { viewBox: '0 0 120 120' },
+      svg('circle', { class: 'ticks', cx: 60, cy: 60, r: 59 }),
+      svg('circle', { class: 'track', cx: 60, cy: 60, r }), bar,
+      svg('circle', { class: 'spinner', cx: 60, cy: 60, r: 44 })),
+    h('div', { class: 'ring-center' }, h('b', {}, center), h('small', {}, caption)));
+  requestAnimationFrame(() => requestAnimationFrame(() => bar.setAttribute('stroke-dashoffset', c * (1 - pct))));
+  return el;
+}
+function typeText(el, text) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { el.textContent = text; return; }
+  el.textContent = ''; el.classList.add('typed');
+  let i = 0;
+  const tick = () => { el.textContent = text.slice(0, ++i); if (i < text.length) setTimeout(tick, 16); else setTimeout(() => el.classList.remove('typed'), 1200); };
+  tick();
+}
+function stars(n) { return h('span', { class: 'stars', 'aria-label': `Lernbedarf ${n} von 5` }, '★'.repeat(n), h('span', { class: 'off' }, '★'.repeat(5 - n))); }
+/** Zweistufiger Bestätigen-Knopf (Dialoge sind in der Vorschau gesperrt). */
+function confirmButton(label, confirmLabel, onConfirm, cls) {
+  const b = h('button', { type: 'button', class: `btn sm ${cls || 'danger'}` }, label);
+  let armed = false, timer;
+  b.addEventListener('click', () => {
+    if (!armed) { armed = true; b.textContent = confirmLabel; timer = setTimeout(() => { armed = false; b.textContent = label; }, 3000); return; }
+    clearTimeout(timer); onConfirm();
+  });
+  return b;
+}
+
+// ---------------- Daten ----------------
+const DEFAULT_STATE = () => ({
+  v: 1,
+  settings: { user_name: 'Noah', class_name: 'BG11d', daily_minutes: 120, session_minutes: 45, break_minutes: 10, study_start: '15:30' },
+  exams: [], tasks: [], history: [],
+});
+let state = DEFAULT_STATE();
+let chat = { messages: [] };
+const LS_KEY = 'jarvis.v1';
+const store = {
+  mode: 'local', db: null, uidPath: null, saving: Promise.resolve(), timers: {},
+  async init() {
+    try {
+      const db = window.claude?.use ? await window.claude.use('db') : null;
+      const user = window.claude?.use ? await window.claude.use('user') : null;
+      if (db && user) {
+        const id = await user.id();
+        if (id) { this.db = db; this.uidPath = `data/users/${id}`; this.mode = 'cloud'; }
+      }
+    } catch { /* lokal weiter */ }
+    if (this.mode === 'cloud') {
+      const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000));
+      try {
+        const [s, c] = await Promise.race([Promise.all([this.ref('state').get(), this.ref('chat').get()]), timeout]);
+        if (s.exists) state = Object.assign(DEFAULT_STATE(), s.data());
+        if (c.exists) chat = Object.assign({ messages: [] }, c.data());
+        return;
+      } catch { this.mode = 'local'; }
+    }
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (raw) { const p = JSON.parse(raw); state = Object.assign(DEFAULT_STATE(), p.state); chat = p.chat || chat; }
+    } catch { /* leer starten */ }
+  },
+  ref(name) { return this.db.collection(this.uidPath).doc(name); },
+  save(which) {
+    clearTimeout(this.timers[which]);
+    this.timers[which] = setTimeout(() => this.flush(which), 400);
+  },
+  flush(which) {
+    if (this.mode === 'cloud') {
+      const data = which === 'chat' ? JSON.parse(JSON.stringify(chat)) : JSON.parse(JSON.stringify(state));
+      this.saving = this.saving.then(() => this.ref(which).set(data)).catch(() => toast('Speichern fehlgeschlagen – prüfe deine Verbindung.', 'error'));
+    } else {
+      try { localStorage.setItem(LS_KEY, JSON.stringify({ state, chat })); } catch { /* nicht verfügbar */ }
+    }
+  },
+};
+
+// ---------------- Abfragen auf den Daten ----------------
+function upcomingExams() {
+  const t = todayISO();
+  return state.exams.filter((e) => e.date >= t)
+    .map((e) => ({ ...e, days_left: daysBetween(t, e.date) }))
+    .sort((a, b) => (a.date + (a.time || '99')).localeCompare(b.date + (b.time || '99')));
+}
+const examById = (id) => state.exams.find((e) => e.id === id);
+const tasksOn = (iso) => state.tasks.filter((t) => t.date === iso).sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
+const overdueTasks = () => state.tasks.filter((t) => t.date < todayISO() && t.status === 'open' && t.kind !== 'break');
+const subjectOf = (t) => examById(t.exam_id)?.subject || '';
+function weekStats() {
+  const t = todayISO();
+  const days = Array.from({ length: 7 }, (_, i) => addDays(t, i - 6));
+  const by = {};
+  for (const r of state.history) { const d = r.completed_at.slice(0, 10); (by[d] ||= { m: 0, n: 0 }); by[d].m += r.minutes; by[d].n += 1; }
+  const series = days.map((d) => ({ date: d, minutes: by[d]?.m || 0 }));
+  let streak = 0, cur = by[t] ? t : addDays(t, -1);
+  while (by[cur]) { streak++; cur = addDays(cur, -1); }
+  const subj = {};
+  for (const r of state.history) if (r.completed_at.slice(0, 10) >= days[0]) subj[r.subject] = (subj[r.subject] || 0) + r.minutes;
+  return { days: series, total: series.reduce((a, b) => a + b.minutes, 0), done: days.reduce((a, d) => a + (by[d]?.n || 0), 0), streak, subjects: subj };
+}
+function progressFor(exam) {
+  const ts = state.tasks.filter((t) => t.exam_id === exam.id && t.kind !== 'break');
+  const planned = ts.reduce((a, t) => a + t.minutes, 0);
+  const done = ts.filter((t) => t.status === 'done').reduce((a, t) => a + t.minutes, 0);
+  return { planned, done, percent: planned ? Math.round((100 * done) / planned) : 0 };
+}
+
+// ---------------- Lernplaner ----------------
+function buildPlan(day) {
+  const cfg = state.settings;
+  // offene Blöcke dieses Tages neu planen, erledigte behalten
+  state.tasks = state.tasks.filter((t) => !(t.date === day && t.status !== 'done'));
+  const doneMin = tasksOn(day).filter((t) => t.kind !== 'break').reduce((a, t) => a + t.minutes, 0);
+  let budget = Math.max(0, cfg.daily_minutes - doneMin);
+  const blocks = [];
+  // 1) Liegengebliebenes zuerst nachholen
+  if (day === todayISO()) {
+    for (const t of overdueTasks()) {
+      const ex = examById(t.exam_id);
+      if (ex && ex.date <= day) { t.status = 'skipped'; continue; } // Klausur schon vorbei
+      if (budget < t.minutes) continue;
+      t.status = 'skipped';
+      blocks.push({ exam_id: t.exam_id, minutes: t.minutes, title: `Nachholen: ${t.title.replace(/^Nachholen: /, '')}`, kind: t.kind });
+      budget -= t.minutes;
+    }
+  }
+  // 2) Restzeit nach Dringlichkeit × Lernbedarf verteilen
+  const cands = state.exams.filter((e) => e.date > day && daysBetween(day, e.date) <= 21)
+    .map((e) => { const d = daysBetween(day, e.date); return { e, d, w: e.difficulty * (d <= 2 ? 2.5 : 1) / Math.pow(d, 0.8) }; })
+    .sort((a, b) => b.w - a.w).slice(0, 4);
+  const total = cands.reduce((a, c) => a + c.w, 0);
+  const alloc = [];
+  for (const c of cands) {
+    const m = Math.floor((budget * c.w) / total / 15) * 15;
+    if (m >= 15) alloc.push({ ...c, m });
+  }
+  let rest = budget - alloc.reduce((a, c) => a + c.m, 0);
+  if (alloc.length && rest >= 15) alloc[0].m += Math.floor(rest / 15) * 15;
+  // in Blöcke schneiden, Fächer abwechseln
+  const queues = alloc.map((c) => {
+    const q = []; let m = c.m;
+    while (m >= 15) { const b = Math.min(cfg.session_minutes, m); q.push({ exam_id: c.e.id, minutes: b, kind: c.d <= 2 ? 'review' : 'learn',
+      title: c.d <= 2 ? 'Wiederholen & Probeaufgaben' : c.d <= 6 ? 'Übungsaufgaben lösen' : 'Stoff erarbeiten' }); m -= b; }
+    return q;
+  });
+  while (queues.some((q) => q.length)) for (const q of queues) if (q.length) blocks.push(q.shift());
+  // 3) Zeiten und Pausen
+  let time = cfg.study_start;
+  const lastDone = tasksOn(day).filter((t) => t.start_time).map((t) => timeAdd(t.start_time, t.minutes)).sort().pop();
+  if (day === todayISO()) { const n = new Date(); const now = `${pad(n.getHours())}:${pad(Math.ceil(n.getMinutes() / 5) * 5 % 60)}`; if (now > time) time = now; }
+  if (lastDone && lastDone > time) time = lastDone;
+  blocks.forEach((b, i) => {
+    state.tasks.push({ id: uid(), date: day, start_time: time, status: 'open', ...b });
+    time = timeAdd(time, b.minutes);
+    if (i < blocks.length - 1 && cfg.break_minutes > 0) {
+      state.tasks.push({ id: uid(), date: day, start_time: time, minutes: cfg.break_minutes, title: 'Pause', kind: 'break', status: 'open' });
+      time = timeAdd(time, cfg.break_minutes);
+    }
+  });
+  store.save('state');
+  return blocks.length;
+}
+function setTaskStatus(task, status) {
+  if (status === 'done' && task.status !== 'done') {
+    task.status = 'done'; task.done_at = nowStamp();
+    state.history.push({ task_id: task.id, exam_id: task.exam_id, subject: subjectOf(task) || task.title, minutes: task.minutes, completed_at: nowStamp() });
+  } else if (status !== 'done') {
+    task.status = status; task.done_at = null;
+    state.history = state.history.filter((r) => r.task_id !== task.id);
+  }
+  store.save('state');
+}
+
+// ---------------- Klausurplan BG11d (aus deinem PDF „Klausurplan Winter 2026“) ----------------
+const BG11D_PLAN = [
+  { date: '2026-11-17', subject: 'Geschichte' },
+  { date: '2026-11-19', subject: 'Physik' },
+  { date: '2026-11-23', subject: 'SWP-GK', hint: 'Schwerpunktfach Grundkurs' },
+  { date: '2026-11-25', subject: 'SWP-GK', hint: 'Schwerpunktfach Grundkurs' },
+  { date: '2026-11-26', subject: 'Chemie', notes: 'Gruppen 1, 2, 3, 4', warn: 'Nur wenn du in Gruppe 1–4 bist' },
+  { date: '2026-11-30', subject: 'Biologie', notes: 'Gruppen 1, 2, 7, 8', warn: 'Nur wenn du in Gruppe 1, 2, 7 oder 8 bist' },
+  { date: '2026-12-03', subject: 'Biologie', notes: 'Gruppen 3, 4, 5, 6, 9', warn: 'Nur wenn du in Gruppe 3, 4, 5, 6 oder 9 bist' },
+  { date: '2026-12-04', subject: 'Deutsch' },
+  { date: '2026-12-07', subject: 'Chemie', notes: 'Gruppe 5', warn: 'Nur wenn du in Gruppe 5 bist' },
+  { date: '2026-12-09', subject: 'Spanisch', warn: 'Nur wenn du Spanisch hast' },
+  { date: '2026-12-10', subject: 'Sport', warn: 'Nur wenn du eine Sportklausur schreibst' },
+  { date: '2026-12-11', subject: 'Englisch' },
+  { date: '2026-12-16', subject: 'SWP-LK', hint: 'Schwerpunktfach Leistungskurs' },
+  { date: '2026-12-18', subject: 'Mathematik' },
+  { date: '2026-12-21', subject: 'SWP-LK', hint: 'Schwerpunktfach Leistungskurs' },
+];
+
+// ---------------- Router ----------------
+const VIEWS = {
+  dashboard: { title: 'Dashboard', eyebrow: 'Systemübersicht', render: renderDashboard },
+  klausuren: { title: 'Klausuren', eyebrow: 'Termine verwalten', render: renderExams },
+  lernen: { title: 'KI-Lernpartner', eyebrow: 'Lernen mit JARVIS', render: renderChat },
+  einstellungen: { title: 'Einstellungen', eyebrow: 'Konfiguration', render: renderSettings },
+};
+function route() {
+  const name = location.hash.replace(/^#/, '');
+  const key = name in VIEWS ? name : 'dashboard';
+  for (const k of Object.keys(VIEWS)) document.getElementById(`view-${k}`).hidden = k !== key;
+  document.querySelectorAll('.nav a[data-view]').forEach((a) => a.classList.toggle('active', a.dataset.view === key));
+  document.getElementById('view-title').textContent = VIEWS[key].title;
+  document.getElementById('view-eyebrow').textContent = VIEWS[key].eyebrow;
+  VIEWS[key].render(document.getElementById(`view-${key}`));
+}
+const go = (name) => { if (location.hash === `#${name}`) route(); else location.hash = name; };
+
+// ---------------- Dashboard ----------------
+const ICON_CAL = ['M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z'];
+const ICON_TASK = ['M9 11l3 3L22 4', 'M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11'];
+const ICON_CHART = ['M3 3v18h18', 'M7 15l4-4 3 3 5-6'];
+const ICON_FLAME = ['M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-3 2-4 2-7 2 1 3 3 3 5'];
+
+function renderDashboard(root) {
+  const t = todayISO(), cfg = state.settings;
+  const up = upcomingExams(), next = up[0];
+  const today = tasksOn(t), learn = today.filter((x) => x.kind !== 'break');
+  const sum = { total: learn.length, done: learn.filter((x) => x.status === 'done').length, minutes: learn.reduce((a, x) => a + x.minutes, 0) };
+  const overdue = overdueTasks(), wk = weekStats();
+  let delay = 0;
+  const panel = (cls, ...kids) => { const p = h('div', { class: `panel ${cls}` }, ...kids); p.style.setProperty('animation-delay', `${(delay += 60)}ms`); return p; };
+
+  // Begrüßung
+  const hour = new Date().getHours();
+  const greet = hour < 11 ? 'Guten Morgen' : hour < 18 ? 'Guten Tag' : 'Guten Abend';
+  let text;
+  if (!next) text = 'Ich habe noch keine Klausuren gespeichert. Übernimm deinen BG11d-Klausurplan unter „Klausuren“ – danach erstelle ich deinen Lernplan.';
+  else {
+    const when = next.days_left === 0 ? 'heute' : next.days_left === 1 ? 'morgen' : `am ${dateLong(next.date)}`;
+    text = `Hier ist dein Tagesbericht. Deine nächste Klausur ist ${next.subject} ${when}${next.time ? ` um ${next.time} Uhr` : ''}. `;
+    text += sum.total ? `Heute stehen ${sum.total} Lernblöcke mit insgesamt ${minutes(sum.minutes)} an.` : 'Für heute ist noch kein Lernplan erstellt.';
+    if (next.days_left <= 3) text += ` Ich empfehle, heute besonders ${next.subject} zu wiederholen.`;
+  }
+  const msg = h('p'); requestAnimationFrame(() => typeText(msg, text));
+  const hero = panel('span-12 hero',
+    h('div', { class: 'hero-text' },
+      h('span', { class: 'eyebrow' }, `${cfg.class_name || 'JARVIS'} · ${dateLong(t)}`),
+      h('h2', {}, greet, h('span', { class: 'accent' }, cfg.user_name ? `, ${cfg.user_name}` : ''), '.'),
+      msg,
+      next ? h('div', { class: 'next-exam' },
+        h('div', {}, h('span', { class: 'label' }, 'Nächste Klausur'), h('span', { class: 'value' }, next.subject)),
+        h('div', {}, h('span', { class: 'label' }, 'Datum'), h('span', { class: 'value' }, dateShort(next.date))),
+        h('div', {}, h('span', { class: 'label' }, 'Uhrzeit'), h('span', { class: 'value' }, next.time ? `${next.time} Uhr` : 'unbekannt')),
+        h('a', { class: 'btn primary hero-cta', href: '#lernen' }, '🎯 Mit JARVIS lernen'))
+        : h('a', { class: 'btn primary', href: '#klausuren' }, '+ Klausurplan übernehmen')),
+    next ? ring({ value: Math.max(0, 28 - next.days_left), max: 28, center: String(next.days_left), caption: next.days_left === 1 ? 'Tag' : 'Tage', urgent: next.days_left <= 3 })
+      : ring({ value: 0, max: 1, center: '—', caption: 'Standby' }));
+
+  const stat = (label, value, unit, hint, paths) => [icon(paths, 'spark'), h('div', { class: 'label' }, label),
+    h('div', { class: 'value' }, String(value), unit ? h('small', {}, unit) : null), h('div', { class: 'hint' }, hint)];
+
+  // Heute
+  const todayKids = [h('div', { class: 'panel-head' }, h('h2', {}, 'Heute'), h('span', { class: 'meta' }, `${sum.done}/${sum.total} erledigt`))];
+  if (overdue.length) todayKids.push(h('div', { class: 'alert' }, '⚠', h('span', {}, `${overdue.length} Aufgabe(n) aus den letzten Tagen sind noch offen. „Neu planen“ holt sie heute nach.`)));
+  if (today.length) todayKids.push(h('ul', { class: 'tasks' }, today.map((x) => taskItem(x, root))));
+  else todayKids.push(h('div', { class: 'empty' }, icon(ICON_TASK), h('div', {}, 'Für heute sind keine Lernblöcke geplant.'),
+    h('small', {}, up.length ? `Ich verteile ${minutes(cfg.daily_minutes)} Lernzeit auf deine nächsten Klausuren.` : 'Füge zuerst deine Klausuren hinzu.')));
+  if (up.length) todayKids.push(h('div', { class: 'plan-actions' },
+    h('button', { type: 'button', class: `btn ${today.length ? 'ghost sm' : 'primary'}`, onclick: () => {
+      const n = buildPlan(t); toast(n ? `Lernplan erstellt: ${n} Blöcke.` : 'Heute ist keine Lernzeit mehr übrig.'); renderDashboard(root);
+    } }, today.length ? '↻ Neu planen' : '⚡ Lernplan für heute erstellen'),
+    h('button', { type: 'button', class: 'btn ghost sm', onclick: () => {
+      const n = buildPlan(addDays(t, 1)); toast(n ? `Plan für morgen erstellt: ${n} Blöcke.` : 'Keine Klausuren nach morgen gefunden.');
+    } }, 'Plan für morgen')));
+
+  // Klausuren
+  const exHead = h('div', { class: 'panel-head' }, h('h2', {}, 'Nächste Klausuren'), h('a', { class: 'meta', href: '#klausuren' }, 'Alle →'));
+  const exBody = up.length ? h('ul', { class: 'timeline' }, up.slice(0, 7).map((e) => h('li', {},
+    h('div', {}, h('div', { class: 'subj' }, e.subject), h('div', { class: 'when' }, `${weekday(e.date)}, ${dateShort(e.date).split(', ').pop()}${e.time ? ` · ${e.time} Uhr` : ''}`)),
+    h('span', { class: `badge ${e.days_left === 0 ? 'today' : e.days_left <= 3 ? 'soon' : ''}` }, daysLabel(e.days_left)))))
+    : h('div', { class: 'empty' }, icon(ICON_CAL), h('div', {}, 'Keine anstehenden Klausuren.'), h('a', { class: 'btn sm', href: '#klausuren' }, 'Klausurplan übernehmen'));
+
+  // Fortschritt
+  const prog = up.map((e) => ({ e, ...progressFor(e) }));
+  const planned = prog.reduce((a, p) => a + p.planned, 0), done = prog.reduce((a, p) => a + p.done, 0);
+  const pct = planned ? Math.round((100 * done) / planned) : 0;
+  const rows = prog.filter((p) => p.planned).slice(0, 6).map((p) => {
+    const fill = h('i'); requestAnimationFrame(() => requestAnimationFrame(() => fill.style.setProperty('width', `${p.percent}%`)));
+    return h('div', { class: 'bar-row' }, h('div', { class: 'bar-label' }, h('span', {}, `${p.e.subject} · ${dateShort(p.e.date).split(', ').pop()}`), h('span', {}, `${p.percent} %`)), h('div', { class: 'meter' }, fill));
+  });
+
+  // Woche
+  const max = Math.max(60, ...wk.days.map((x) => x.minutes));
+  const week = h('div', { class: 'week', role: 'img', 'aria-label': 'Lernminuten der letzten 7 Tage' }, wk.days.map((d) => {
+    const bar = h('i', { title: `${d.minutes} min` });
+    requestAnimationFrame(() => requestAnimationFrame(() => bar.style.setProperty('height', `${Math.round((d.minutes / max) * 100)}%`)));
+    return h('div', { class: `col ${d.date === t ? 'today' : ''}` }, bar, h('span', {}, weekday(d.date)));
+  }));
+
+  root.replaceChildren(h('div', { class: 'grid' },
+    hero,
+    panel('span-3 stat', ...stat('Klausuren', up.length, 'offen', next ? `nächste: ${next.subject}` : 'keine geplant', ICON_CAL)),
+    panel('span-3 stat', ...stat('Heute', minutes(sum.minutes), '', `${sum.done}/${sum.total} Blöcke erledigt`, ICON_TASK)),
+    panel('span-3 stat', ...stat('Diese Woche', minutes(wk.total), '', `${wk.done} Aufgaben erledigt`, ICON_CHART)),
+    panel('span-3 stat', ...stat('Lernserie', wk.streak, wk.streak === 1 ? 'Tag' : 'Tage', wk.streak ? 'Weiter so!' : 'Starte heute deine Serie', ICON_FLAME)),
+    panel('span-7', ...todayKids),
+    panel('span-5', exHead, exBody),
+    panel('span-7', h('div', { class: 'panel-head' }, h('h2', {}, 'Lernfortschritt'), h('span', { class: 'meta' }, `${minutes(done)} von ${minutes(planned)}`)),
+      h('div', { class: 'progress-wrap' }, ring({ value: pct, max: 100, center: `${pct}%`, caption: 'Gesamt', size: 'sm' }),
+        h('div', { class: 'bars' }, rows.length ? rows : h('div', { class: 'empty' }, 'Sobald du einen Lernplan erstellst, siehst du hier deinen Fortschritt pro Fach.')))),
+    panel('span-5', h('div', { class: 'panel-head' }, h('h2', {}, 'Letzte 7 Tage'), h('span', { class: 'meta' }, minutes(wk.total))), week)));
+}
+function taskItem(t, root) {
+  if (t.kind === 'break') return h('li', { class: 'task break' }, h('span', {}, '☕'), h('div', {}, h('div', { class: 'task-sub' }, `${t.start_time || ''} Pause`)), h('span', { class: 'task-min' }, `${t.minutes}′`));
+  const subj = subjectOf(t);
+  const cb = h('input', { type: 'checkbox', class: 'check', checked: t.status === 'done', 'aria-label': `${t.title} erledigt`,
+    onchange: () => { setTaskStatus(t, cb.checked ? 'done' : 'open'); if (cb.checked) toast('Erledigt. Gut gemacht!'); renderDashboard(root); } });
+  return h('li', { class: `task ${t.status === 'done' ? 'done' : ''}` }, cb,
+    h('div', {}, h('div', { class: 'task-title' }, subj ? `${subj} – ${t.title}` : t.title),
+      h('div', { class: 'task-sub' }, [t.start_time ? `${t.start_time} Uhr` : null, t.kind === 'review' ? 'Wiederholung' : 'Lernblock'].filter(Boolean).join(' · '))),
+    h('span', { class: 'task-min' }, `${t.minutes} min`));
+}
+
+// ---------------- Klausuren ----------------
+let editing = null;
+function renderExams(root) {
+  const t = todayISO();
+  const all = state.exams.map((e) => ({ ...e, days_left: daysBetween(t, e.date) })).sort((a, b) => a.date.localeCompare(b.date));
+  const panels = [];
+
+  // Import aus dem PDF
+  const has = (p) => state.exams.some((e) => e.date === p.date && e.subject === p.subject);
+  const open = BG11D_PLAN.filter((p) => p.date >= t && !has(p));
+  if (open.length) {
+    const boxes = open.map((p) => {
+      const cb = h('input', { type: 'checkbox', class: 'check', checked: !p.warn });
+      return { p, cb, el: h('label', { class: `import-item ${p.warn ? 'warn' : ''}` }, cb,
+        h('div', {}, h('b', {}, p.subject), ` · ${dateShort(p.date)}`,
+          p.notes ? h('small', {}, p.notes) : null, p.hint ? h('small', {}, p.hint) : null,
+          p.warn ? h('small', { class: 'warn' }, `⚠ ${p.warn}`) : null)) };
+    });
+    panels.push(h('div', { class: 'panel span-12' },
+      h('div', { class: 'panel-head' }, h('h2', {}, 'Klausurplan BG11d übernehmen'), h('span', { class: 'meta' }, 'aus „Klausurplan Winter 2026“')),
+      h('p', { class: 'mode-hint' }, 'Ich habe diese Termine für die BG11d in deinem PDF gefunden. Im Plan stehen keine Uhrzeiten, die kannst du danach bei jeder Klausur ergänzen. Hake an, was für dich gilt, und bestätige.'),
+      h('ul', { class: 'import-list' }, boxes.map((b) => h('li', {}, b.el))),
+      h('div', { class: 'confirm-row' },
+        h('button', { type: 'button', class: 'btn primary', onclick: () => {
+          const chosen = boxes.filter((b) => b.cb.checked);
+          for (const { p } of chosen) state.exams.push({ id: uid(), subject: p.subject, date: p.date, time: null, notes: [p.notes, p.hint].filter(Boolean).join(' · '), difficulty: 3, source: 'import' });
+          store.save('state'); toast(`${chosen.length} Klausuren übernommen.`); renderExams(root);
+        } }, 'Ausgewählte übernehmen'),
+        h('small', { class: 'sync' }, 'Termine, die du schon hast, blende ich aus.'))));
+  }
+
+  // Formular
+  const e = editing || {};
+  const f = {
+    subject: h('input', { id: 'f-subject', required: true, maxlength: 80, placeholder: 'z. B. Mathematik', value: e.subject || '', autocomplete: 'off' }),
+    date: h('input', { id: 'f-date', type: 'date', required: true, value: e.date || '' }),
+    time: h('input', { id: 'f-time', type: 'time', value: e.time || '' }),
+    difficulty: h('input', { id: 'f-difficulty', type: 'range', min: 1, max: 5, step: 1, value: e.difficulty || 3 }),
+    notes: h('textarea', { id: 'f-notes', maxlength: 1000, placeholder: 'Themen, Raum, Hilfsmittel …' }),
+  };
+  f.notes.value = e.notes || '';
+  const out = h('output', {}, String(f.difficulty.value));
+  f.difficulty.addEventListener('input', () => { out.value = f.difficulty.value; });
+  const field = (label, input, cls, hint) => h('div', { class: `field ${cls || ''}` }, h('label', { for: input.id }, label), input, hint ? h('small', {}, hint) : null);
+  const form = h('form', { class: 'form', onsubmit: (ev) => {
+    ev.preventDefault();
+    const subject = clean(f.subject.value, 80);
+    if (!subject) return toast('Bitte ein Fach eintragen.', 'error');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(f.date.value)) return toast('Bitte ein gültiges Datum wählen.', 'error');
+    const data = { subject, date: f.date.value, time: /^\d{2}:\d{2}$/.test(f.time.value) ? f.time.value : null, difficulty: Number(f.difficulty.value), notes: clean(f.notes.value, 1000) };
+    if (editing) { Object.assign(examById(editing.id), data); toast('Klausur aktualisiert.'); }
+    else { state.exams.push({ id: uid(), source: 'manual', ...data }); toast('Klausur gespeichert.'); }
+    editing = null; store.save('state'); renderExams(root);
+  } },
+    field('Fach', f.subject, 'full'), field('Datum', f.date), field('Uhrzeit', f.time, '', 'optional – leer lassen, wenn unbekannt'),
+    h('div', { class: 'field full' }, h('label', { for: 'f-difficulty' }, 'Lernbedarf: ', out), f.difficulty, h('small', {}, '1 = leicht · 5 = braucht viel Lernzeit')),
+    field('Notizen / Themen', f.notes, 'full'),
+    h('div', { class: 'form-actions' },
+      editing ? h('button', { type: 'button', class: 'btn ghost', onclick: () => { editing = null; renderExams(root); } }, 'Abbrechen') : null,
+      h('button', { type: 'submit', class: 'btn primary' }, editing ? 'Speichern' : '+ Hinzufügen')));
+  panels.push(h('div', { class: 'panel span-4' }, h('div', { class: 'panel-head' }, h('h2', {}, editing ? 'Klausur bearbeiten' : 'Neue Klausur')), form));
+
+  // Liste
+  const list = all.length ? h('div', { class: 'table-wrap' }, h('table', { class: 'data' },
+    h('thead', {}, h('tr', {}, ['Fach', 'Datum', 'Zeit', 'Lernbedarf', 'Countdown', ''].map((x) => h('th', {}, x)))),
+    h('tbody', {}, all.map((x) => h('tr', { class: x.days_left < 0 ? 'past' : '' },
+      h('td', {}, h('b', {}, x.subject), x.notes ? h('div', { class: 'task-sub' }, x.notes) : null),
+      h('td', {}, dateShort(x.date)), h('td', {}, x.time || '—'), h('td', {}, stars(x.difficulty)),
+      h('td', {}, h('span', { class: `badge ${x.days_left < 0 ? 'muted' : x.days_left <= 3 ? 'soon' : ''}` }, daysLabel(x.days_left))),
+      h('td', { class: 'actions' },
+        h('button', { type: 'button', class: 'btn sm ghost', title: 'Bearbeiten', 'aria-label': `${x.subject} bearbeiten`, onclick: () => { editing = x; renderExams(root); window.scrollTo({ top: 0, behavior: 'smooth' }); } }, '✎'),
+        confirmButton('✕', 'Löschen?', () => {
+          state.exams = state.exams.filter((y) => y.id !== x.id);
+          state.tasks = state.tasks.filter((y) => y.exam_id !== x.id);
+          store.save('state'); toast('Klausur gelöscht.'); renderExams(root);
+        }))))))) : h('div', { class: 'empty' }, 'Noch keine Klausuren gespeichert.');
+  panels.push(h('div', { class: 'panel span-8' }, h('div', { class: 'panel-head' }, h('h2', {}, 'Alle Klausuren'), h('span', { class: 'meta' }, `${all.length} gespeichert`)), list));
+  root.replaceChildren(h('div', { class: 'grid' }, panels));
+}
+
+// ---------------- Einstellungen ----------------
+function renderSettings(root) {
+  const s = state.settings;
+  const inp = (k, a) => h('input', { id: `s-${k}`, value: s[k] ?? '', ...a });
+  const f = {
+    user_name: inp('user_name', { maxlength: 40 }), class_name: inp('class_name', { maxlength: 20 }),
+    daily_minutes: inp('daily_minutes', { type: 'number', min: 0, max: 720, step: 15 }),
+    session_minutes: inp('session_minutes', { type: 'number', min: 15, max: 180, step: 5 }),
+    break_minutes: inp('break_minutes', { type: 'number', min: 0, max: 60, step: 5 }),
+    study_start: inp('study_start', { type: 'time' }),
+  };
+  const field = (label, el, hint) => h('div', { class: 'field third' }, h('label', { for: el.id }, label), el, hint ? h('small', {}, hint) : null);
+  const form = h('form', { class: 'form', onsubmit: (ev) => {
+    ev.preventDefault();
+    const num = (el, lo, hi, d) => { const n = Math.round(Number(el.value)); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d; };
+    Object.assign(state.settings, {
+      user_name: clean(f.user_name.value, 40), class_name: clean(f.class_name.value, 20),
+      daily_minutes: num(f.daily_minutes, 0, 720, 120), session_minutes: num(f.session_minutes, 15, 180, 45),
+      break_minutes: num(f.break_minutes, 0, 60, 10), study_start: /^\d{2}:\d{2}$/.test(f.study_start.value) ? f.study_start.value : '15:30',
+    });
+    store.save('state'); toast('Einstellungen gespeichert.');
+  } },
+    field('Dein Name', f.user_name), field('Klasse', f.class_name),
+    field('Lernzeit pro Tag (Min.)', f.daily_minutes, 'Wie viel Zeit hast du realistisch?'),
+    field('Lernblock (Min.)', f.session_minutes), field('Pause (Min.)', f.break_minutes), field('Lernbeginn', f.study_start, 'Frühester Start nach der Schule'),
+    h('div', { class: 'form-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Speichern')));
+  root.replaceChildren(h('div', { class: 'grid' },
+    h('div', { class: 'panel span-8' }, h('div', { class: 'panel-head' }, h('h2', {}, 'Profil & Lernzeit')), form),
+    h('div', { class: 'panel span-4' }, h('div', { class: 'panel-head' }, h('h2', {}, 'Systemstatus')),
+      h('ul', { class: 'tasks' },
+        h('li', { class: 'task' }, h('span', {}, '🗄'), h('div', {}, h('div', { class: 'task-title' }, 'Speicher'),
+          h('div', { class: 'task-sub' }, store.mode === 'cloud' ? 'In deinem Claude-Konto – auf allen Geräten gleich' : 'Nur in diesem Browser')), h('span', { class: 'badge' }, 'OK')),
+        h('li', { class: 'task' }, h('span', {}, '🧠'), h('div', {}, h('div', { class: 'task-title' }, 'KI-Kern'),
+          h('div', { class: 'task-sub' }, ai ? 'Claude – kein eigener Schlüssel nötig' : 'Nicht verfügbar – Offline-Antworten')), h('span', { class: `badge ${ai ? '' : 'muted'}` }, ai ? 'aktiv' : 'offline'))),
+      h('div', { class: 'plan-actions' }, confirmButton('Alle Daten löschen', 'Wirklich alles löschen?', () => {
+        state = DEFAULT_STATE(); chat = { messages: [] }; store.save('state'); store.save('chat'); toast('Alle Daten gelöscht.'); go('dashboard');
+      })))));
+}
+
+// ---------------- KI-Lernpartner ----------------
+let ai = null; // sample-Funktion oder null
+const MODES = [
+  { id: 'chat', icon: '💬', label: 'Fragen', hint: 'Frag JARVIS alles – auch zu deinen Klausuren.' },
+  { id: 'explain', icon: '📘', label: 'Erklären', hint: 'JARVIS erklärt ein Thema Schritt für Schritt.' },
+  { id: 'quiz', icon: '🎯', label: 'Abfragen', hint: 'JARVIS stellt dir Fragen und gibt Feedback.' },
+  { id: 'cards', icon: '🧠', label: 'Karteikarten', hint: 'JARVIS erstellt Karteikarten zum Thema.' },
+  { id: 'summary', icon: '📝', label: 'Lernzettel', hint: 'JARVIS fasst ein Thema kompakt zusammen.' },
+];
+const MODE_PROMPT = {
+  chat: 'Modus: Freies Gespräch. Beantworte die Frage des Schülers.',
+  explain: 'Modus: Erklären. Erkläre das Thema Schritt für Schritt: erst die Kernidee in 2–3 Sätzen, dann Details, ein konkretes Beispiel und zum Schluss eine kurze Verständnisfrage.',
+  quiz: 'Modus: Abfragen. Stelle genau EINE Frage auf einmal (abwechselnd offen oder Multiple Choice A–D) und warte auf die Antwort. Bewerte jede Antwort kurz (richtig/teilweise/falsch), erkläre Fehler und stelle dann die nächste Frage. Steigere langsam die Schwierigkeit. Nach 5 Fragen gibst du eine kurze Auswertung mit Themen zum Wiederholen.',
+  cards: 'Modus: Karteikarten. Erstelle 8 Karteikarten im Format **Vorderseite:** … / **Rückseite:** … zu den wichtigsten Begriffen. Rückseiten kurz halten.',
+  summary: 'Modus: Lernzettel. Erstelle einen kompakten Lernzettel: wichtigste Begriffe, Zusammenhänge, typische Klausurfragen, häufige Fehler.',
+};
+const QUICK = {
+  chat: ['Was muss ich heute lernen?', 'Wann schreibe ich meine nächste Klausur?', 'Welche Klausur kommt zuerst?', 'Erstelle mir einen Lernplan für morgen.', 'Was habe ich diese Woche geschafft?'],
+  explain: ['Erkläre mir das wichtigste Thema für meine nächste Klausur.', 'Erkläre mir: '],
+  quiz: ['Frag mich ab! Starte mit einer leichten Frage.', 'Quiz mich zu: '],
+  cards: ['Erstelle Karteikarten zu: '],
+  summary: ['Erstelle mir einen Lernzettel zu: '],
+};
+const PERSONA = `Du bist J.A.R.V.I.S, der persönliche Lernassistent eines Schülers der 11. Klasse an einem beruflichen Gymnasium in Hessen. Du sprichst Deutsch, duzt ihn, bist freundlich, motivierend und präzise – wie ein höflicher, kluger Butler.
+Regeln:
+- Antworte kurz und gut lesbar (kurze Absätze, Listen, **fett** für Schlüsselbegriffe). Kein HTML, keine Tabellen.
+- Für Fragen zu Klausuren, Terminen, Aufgaben und Fortschritt nutzt du NUR die "Gespeicherten Daten". Erfinde niemals Klausurtermine, Uhrzeiten oder Themen. Fehlt etwas, sag es.
+- Fachliches erklärst du auf Oberstufenniveau mit Beispielen. Wenn du bei einem Fakt unsicher bist, sag das offen.
+- Hilf beim Lernen, statt Hausaufgaben einfach abzunehmen: rege zum Mitdenken an.
+- Lernpläne: berücksichtige verfügbare Lernzeit, Nähe der Klausuren, Lernbedarf (1–5) und Pausen.`;
+
+function dataText() {
+  const s = state.settings, t = todayISO(), wk = weekStats();
+  const tl = (x) => `${subjectOf(x) ? subjectOf(x) + ' – ' : ''}${x.title} (${x.minutes} min, ${x.status === 'done' ? 'erledigt' : 'offen'})`;
+  const L = [`Heute ist ${dateLong(t)} ${t.slice(0, 4)}.`, `Schüler: ${s.user_name || 'unbekannt'}, Klasse ${s.class_name}. Lernzeit pro Tag: ${s.daily_minutes} Minuten.`, '', 'Anstehende Klausuren (chronologisch):'];
+  const up = upcomingExams();
+  L.push(...(up.length ? up.map((e) => `- ${e.subject}: ${dateLong(e.date)}${e.time ? ` um ${e.time} Uhr` : ' (Uhrzeit unbekannt)'}, noch ${e.days_left} Tage, Lernbedarf ${e.difficulty}/5${e.notes ? ` – ${e.notes}` : ''}`) : ['- keine gespeichert']));
+  const td = tasksOn(t).filter((x) => x.kind !== 'break'), tm = tasksOn(addDays(t, 1)).filter((x) => x.kind !== 'break');
+  L.push('', 'Lernaufgaben heute:', ...(td.length ? td.map((x) => `- ${tl(x)}`) : ['- keine geplant']));
+  L.push('', 'Lernaufgaben morgen:', ...(tm.length ? tm.map((x) => `- ${tl(x)}`) : ['- keine geplant']));
+  const od = overdueTasks(); if (od.length) L.push('', 'Nicht erledigt aus den letzten Tagen:', ...od.map((x) => `- ${tl(x)} vom ${x.date}`));
+  L.push('', `Letzte 7 Tage: ${wk.total} Lernminuten, ${wk.done} Aufgaben erledigt, Lernserie ${wk.streak} Tage.`, ...Object.entries(wk.subjects).map(([k, v]) => `- ${k}: ${v} min`));
+  return L.join('\n');
+}
+
+function suggestPlan(day) {
+  const budget = state.settings.daily_minutes;
+  const ex = state.exams.filter((e) => e.date > day).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3);
+  if (!ex.length || budget <= 0) return [];
+  const w = ex.map((e) => e.difficulty / Math.max(daysBetween(day, e.date), 1)), tot = w.reduce((a, b) => a + b, 0);
+  return ex.map((e, i) => [e.subject, Math.round((budget * w[i]) / tot / 15) * 15]).filter(([, m]) => m >= 15);
+}
+function localAnswer(question) {
+  const q = question.toLowerCase(), up = upcomingExams(), s = state.settings, t = todayISO();
+  const has = (...w) => w.some((x) => new RegExp(`\\b${x}`).test(q));
+  const tl = (x) => `${subjectOf(x) ? subjectOf(x) + ' – ' : ''}${x.title} (${x.minutes} min${x.status === 'done' ? ', erledigt' : ''})`;
+  if (has('hallo', 'hi', 'hey', 'moin', 'servus', 'guten') && q.length < 30) return `Hallo ${s.user_name || ''}! Wobei kann ich dir helfen?`;
+  if (has('morgen') && has('plan', 'lern')) {
+    const m = addDays(t, 1), tm = tasksOn(m).filter((x) => x.kind !== 'break');
+    if (tm.length) return [`Für morgen (${dateLong(m)}) ist geplant:`, ...tm.map((x, i) => `${i + 1}. ${tl(x)}`)].join('\n');
+    const p = suggestPlan(m);
+    if (!p.length) return 'Ich habe keine anstehenden Klausuren gespeichert, für die ich morgen planen könnte.';
+    return [`Vorschlag für morgen (${dateLong(m)}), ${s.daily_minutes} Minuten:`, ...p.map(([k, v], i) => `${i + 1}. ${k} – ${v} Minuten`), `Plane nach jedem Block ${s.break_minutes} Minuten Pause ein. Auf dem Dashboard kannst du daraus mit „Plan für morgen“ echte Lernblöcke machen.`].join('\n');
+  }
+  if (has('woche', 'geschafft', 'erledigt', 'fortschritt')) {
+    const wk = weekStats();
+    if (!wk.done) return 'In den letzten 7 Tagen hast du noch keine Lernaufgabe als erledigt markiert.';
+    return [`In den letzten 7 Tagen hast du ${wk.done} Aufgaben erledigt und ${wk.total} Minuten gelernt.`, ...Object.entries(wk.subjects).map(([k, v]) => `- ${k}: ${v} Minuten`), wk.streak ? `Lernserie: ${wk.streak} Tag(e) in Folge. Weiter so!` : ''].join('\n');
+  }
+  if (has('zuerst', 'reihenfolge', 'welche klausur', 'alle klausuren')) {
+    if (!up.length) return 'Ich habe keine anstehenden Klausuren gespeichert.';
+    return ['Deine nächsten Klausuren in zeitlicher Reihenfolge:', ...up.slice(0, 10).map((e, i) => `${i + 1}. ${e.subject} – ${dateLong(e.date)}${e.time ? ` um ${e.time} Uhr` : ''} (${daysLabel(e.days_left).toLowerCase()})`)].join('\n');
+  }
+  if (has('nächste', 'naechste', 'wann', 'klausur')) {
+    if (!up.length) return 'Ich habe keine anstehenden Klausuren gespeichert.';
+    const e = up[0];
+    return `Deine nächste Klausur ist ${e.subject} am ${dateLong(e.date)}${e.time ? ` um ${e.time} Uhr` : ' (Uhrzeit nicht eingetragen)'} – also ${daysLabel(e.days_left).toLowerCase()}.`;
+  }
+  if (has('heute', 'lernen', 'aufgabe', 'tun', 'machen')) {
+    const td = tasksOn(t).filter((x) => x.kind !== 'break');
+    const L = td.length ? ['Heute stehen folgende Aufgaben an:', ...td.map((x, i) => `${i + 1}. ${tl(x)}`)] : ['Für heute sind keine Lernaufgaben eingetragen.', ...(suggestPlan(t).length ? ['Mein Vorschlag:', ...suggestPlan(t).map(([k, v], i) => `${i + 1}. ${k} – ${v} Minuten`)] : [])];
+    if (up.length) L.push(`Deine nächste Klausur ist ${up[0].subject} am ${dateLong(up[0].date)}.`);
+    return L.join('\n');
+  }
+  return 'Mein KI-Kern ist hier gerade nicht verfügbar. Ich kann dir aber sagen, was heute ansteht, wann deine nächste Klausur ist, welche zuerst kommt, was du diese Woche geschafft hast, und einen Lernplan für morgen vorschlagen.';
+}
+
+const chatUI = { mode: 'chat', subject: '', busy: false, ctrl: null };
+function renderChat(root) {
+  const log = h('div', { class: 'chat-log', 'aria-live': 'polite' });
+  const input = h('textarea', { id: 'chat-input', class: 'chat-input', rows: 1, maxlength: 4000, placeholder: 'Schreib JARVIS eine Nachricht …', 'aria-label': 'Nachricht' });
+  const sendBtn = h('button', { class: 'btn primary send', type: 'button', 'aria-label': 'Senden' }, '➤');
+  const quick = h('div', { class: 'quick' }), hint = h('p', { class: 'mode-hint' });
+  const autosize = () => { input.style.setProperty('height', 'auto'); input.style.setProperty('height', `${Math.min(input.scrollHeight, 160)}px`); };
+  const scroll = () => { log.scrollTop = log.scrollHeight; };
+  const add = (role, text) => {
+    const body = h('div', { class: 'msg-body' }); md(body, text);
+    log.append(h('div', { class: `msg ${role}` }, role === 'assistant' ? h('span', { class: 'avatar', 'aria-hidden': 'true' }, h('i'), h('i')) : null, body));
+    return body;
+  };
+  const subjects = [...new Set(upcomingExams().map((e) => e.subject))];
+  const sel = h('select', { id: 'chat-subject', onchange: (e) => { chatUI.subject = e.target.value; } },
+    h('option', { value: '' }, 'Allgemein / kein Fach'), subjects.map((s) => h('option', { value: s, selected: s === chatUI.subject }, s)));
+  const modes = h('div', { class: 'modes', role: 'radiogroup', 'aria-label': 'Lernmodus' }, MODES.map((m) =>
+    h('button', { type: 'button', class: 'mode', role: 'radio', dataset: { mode: m.id }, onclick: () => setMode(m.id) }, h('span', { class: 'mode-icon' }, m.icon), m.label)));
+  function setMode(id) {
+    chatUI.mode = id;
+    modes.querySelectorAll('.mode').forEach((b) => { const on = b.dataset.mode === id; b.classList.toggle('active', on); b.setAttribute('aria-checked', String(on)); });
+    hint.textContent = MODES.find((x) => x.id === id).hint;
+    quick.replaceChildren(...QUICK[id].map((q) => h('button', { type: 'button', class: 'chip', onclick: () => {
+      if (q.endsWith(': ')) { input.value = q + (chatUI.subject ? `${chatUI.subject} – ` : ''); input.focus(); autosize(); } else send(q);
+    } }, q.endsWith(': ') ? q.replace(/: $/, ' …') : q)));
+  }
+  async function send(text) {
+    const message = clean(text ?? input.value, 4000);
+    if (!message || chatUI.busy) return;
+    chatUI.busy = true; sendBtn.disabled = true; input.value = ''; autosize();
+    add('user', message);
+    chat.messages.push({ role: 'user', content: message, ts: nowStamp() });
+    const body = add('assistant', ''); const msgEl = body.parentElement;
+    msgEl.classList.add('typing'); body.append(h('span', { class: 'dots' }, h('i'), h('i'), h('i'))); scroll();
+    let reply = '';
+    try {
+      if (ai) {
+        const hist = chat.messages.slice(-20).map((m) => ({ role: m.role, content: m.content }));
+        while (hist.length && hist[0].role !== 'user') hist.shift();
+        const merged = [];
+        for (const m of hist) { if (merged.length && merged[merged.length - 1].role === m.role) merged[merged.length - 1].content += '\n\n' + m.content; else merged.push({ ...m }); }
+        const focus = chatUI.subject ? `\nFach/Thema im Fokus: ${chatUI.subject}` : '';
+        merged[0] = { role: 'user', content: `${PERSONA}\n\n${MODE_PROMPT[chatUI.mode]}${focus}\n\nGespeicherte Daten:\n${dataText()}\n\n---\nNachricht des Schülers:\n${merged[0].content}` };
+        if (merged.length > 1) merged[merged.length - 1].content = `[${MODE_PROMPT[chatUI.mode]}${focus}]\n${merged[merged.length - 1].content}`;
+        chatUI.ctrl = new AbortController();
+        const res = await ai(merged, { cache: false, signal: chatUI.ctrl.signal, onText: ({ text: t }) => {
+          reply = t; msgEl.classList.remove('typing'); md(body, t); scroll();
+        } });
+        reply = res.text || reply;
+        if (res.truncated) reply += '\n\n_(Antwort gekürzt – frag nach, wenn ich weitermachen soll.)_';
+      } else {
+        reply = localAnswer(message);
+      }
+      md(body, reply);
+    } catch (err) {
+      msgEl.classList.add('error');
+      const code = err && err.code;
+      if (code === 'not_granted') { ai = null; reply = 'Du hast den KI-Zugriff abgelehnt. Ich antworte jetzt offline aus deinen Daten.\n\n' + localAnswer(message); msgEl.classList.remove('error'); }
+      else if (code === 'rate_limited') reply = (err.text || '') + '\n\n⚠ Gerade kommen zu viele Anfragen. Warte kurz und versuch es noch einmal.';
+      else if (code === 'cancelled') reply = err.text || '(abgebrochen)';
+      else reply = (err && err.text ? err.text + '\n\n' : '') + `⚠ Das hat nicht geklappt: ${(err && err.message) || 'unbekannter Fehler'}`;
+      md(body, reply);
+    } finally {
+      msgEl.classList.remove('typing');
+      if (reply) { chat.messages.push({ role: 'assistant', content: reply, ts: nowStamp() }); chat.messages = chat.messages.slice(-80); store.save('chat'); }
+      chatUI.busy = false; sendBtn.disabled = false; scroll();
+    }
+  }
+  sendBtn.addEventListener('click', () => send());
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+  input.addEventListener('input', autosize);
+
+  const side = h('div', { class: 'panel span-4 chat-side' },
+    h('div', { class: 'panel-head' }, h('h2', {}, 'Lernmodus')), modes, hint,
+    h('div', { class: 'field full' }, h('label', { for: 'chat-subject' }, 'Fach'), sel),
+    h('div', { class: 'panel-head', style: { 'margin-top': '18px' } }, h('h2', {}, 'Schnellstart')), quick,
+    h('div', { class: `ai-status ${ai ? 'on' : ''}` }, h('span', { class: `dot ${ai ? 'online' : ''}` }),
+      ai ? 'KI-Kern aktiv – kein eigener Schlüssel nötig.' : 'Offline-Modus: Ich beantworte Fragen zu deinen Klausuren, Aufgaben und deinem Fortschritt.'));
+  const main = h('div', { class: 'panel span-8 chat-main' },
+    h('div', { class: 'panel-head' }, h('h2', {}, 'JARVIS'),
+      confirmButton('Verlauf löschen', 'Wirklich löschen?', () => { chat.messages = []; store.save('chat'); renderChat(root); }, 'ghost')),
+    log, h('div', { class: 'chat-bar' }, input, sendBtn));
+  root.replaceChildren(h('div', { class: 'grid chat-grid' }, main, side));
+  setMode(chatUI.mode);
+  if (!chat.messages.length) add('assistant', `Hallo ${state.settings.user_name || ''}! Ich bin JARVIS, dein Lernpartner. ${ai
+    ? 'Ich kann dir Themen erklären, dich abfragen, Karteikarten und Lernzettel erstellen – und ich kenne deine Klausurtermine.'
+    : 'Ich kenne deine Klausurtermine und Aufgaben. Frag mich zum Beispiel: „Was muss ich heute lernen?“'} Wähle einen Modus und ein Fach.`);
+  else chat.messages.forEach((m) => add(m.role, m.content));
+  scroll();
+}
+
+// Sicherer Mini-Markdown-Renderer (nur DOM-Knoten)
+function inline(text) {
+  const out = []; const re = /(\*\*[^*]+\*\*|`[^`]+`|_[^_]+_)/g; let last = 0, m;
+  while ((m = re.exec(text))) {
+    if (m.index > last) out.push(text.slice(last, m.index));
+    const t = m[0];
+    out.push(t.startsWith('**') ? h('strong', {}, t.slice(2, -2)) : t.startsWith('`') ? h('code', {}, t.slice(1, -1)) : h('em', {}, t.slice(1, -1)));
+    last = m.index + t.length;
+  }
+  if (last < text.length) out.push(text.slice(last));
+  return out;
+}
+function md(el, src) {
+  const nodes = []; let list = null;
+  for (const raw of String(src).split('\n')) {
+    const line = raw.trimEnd();
+    const ul = line.match(/^\s*[-*•]\s+(.*)/), ol = line.match(/^\s*(\d+)[.)]\s+(.*)/);
+    if (ul || ol) { const tag = ul ? 'ul' : 'ol'; if (!list || list.tagName.toLowerCase() !== tag) { list = h(tag); nodes.push(list); } list.append(h('li', {}, inline(ul ? ul[1] : ol[2]))); continue; }
+    list = null;
+    const hd = line.match(/^#{1,4}\s+(.*)/);
+    if (hd) nodes.push(h('h4', {}, inline(hd[1])));
+    else if (line.trim() === '---') nodes.push(h('hr'));
+    else if (line.trim()) nodes.push(h('p', {}, inline(line)));
+  }
+  el.replaceChildren(...nodes);
+}
+
+// ---------------- Start ----------------
+const fmtTime = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit' });
+const fmtDate = new Intl.DateTimeFormat('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+let lastDay = todayISO();
+function tick() {
+  const n = new Date();
+  document.getElementById('clock-time').textContent = fmtTime.format(n);
+  document.getElementById('clock-date').textContent = fmtDate.format(n);
+  if (todayISO() !== lastDay) { lastDay = todayISO(); if (!document.getElementById('view-dashboard').hidden) route(); }
+}
+async function boot() {
+  tick(); setInterval(tick, 15000);
+  route(); // sofort mit leerem Zustand zeichnen
+  const [_, sample] = await Promise.all([store.init(), window.claude?.use ? window.claude.use('sample').catch(() => null) : null]);
+  ai = typeof sample === 'function' ? sample : null;
+  const dot = document.getElementById('status-dot'), txt = document.getElementById('status-text');
+  dot.className = 'dot online';
+  txt.textContent = store.mode === 'cloud' ? 'Online · gespeichert' : 'Lokal gespeichert';
+  window.addEventListener('hashchange', route);
+  route();
+}
+boot();
+
+</script>
