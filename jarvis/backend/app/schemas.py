@@ -80,3 +80,19 @@ class SettingsIn(BaseModel):
     @classmethod
     def _texts(cls, v: str | None) -> str | None:
         return _clean_text(v) if v is not None else v
+
+
+class ChatIn(BaseModel):
+    message: str = Field(min_length=1, max_length=4000)
+    mode: str = Field(default="chat", pattern="^(chat|explain|quiz|cards|summary)$")
+    subject: str | None = Field(default=None, max_length=80)
+
+    @field_validator("message", "subject")
+    @classmethod
+    def _texts(cls, v: str | None, info) -> str | None:
+        if v is None:
+            return v
+        v = _clean_text(v)
+        if info.field_name == "message" and not v:
+            raise ValueError("Nachricht darf nicht leer sein")
+        return v or None

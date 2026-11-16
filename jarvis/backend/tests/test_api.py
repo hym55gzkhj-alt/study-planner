@@ -83,7 +83,7 @@ def test_task_completion_writes_history(client):
 def test_settings_persist(client):
     s = client.get("/api/settings").json()
     assert s["briefing_time"] == "07:00" and s["ai_enabled"] is False
-    r = client.put("/api/settings", json={"user_name": "Markus", "daily_minutes": 90})
-    assert r.json()["user_name"] == "Markus" and r.json()["daily_minutes"] == 90
+    r = client.put("/api/settings", json={"user_name": "Noah", "daily_minutes": 90})
+    assert r.json()["user_name"] == "Noah" and r.json()["daily_minutes"] == 90
     assert client.put("/api/settings", json={"briefing_time": "7 Uhr"}).status_code == 422
-    assert client.get("/api/dashboard").json()["user_name"] == "Markus"
+    assert client.get("/api/dashboard").json()["user_name"] == "Noah"

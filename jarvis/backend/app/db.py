@@ -52,6 +52,16 @@ CREATE TABLE IF NOT EXISTS history (
     completed_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- JARVIS-Chat (Verlauf bleibt nach Neustart erhalten)
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    role        TEXT NOT NULL CHECK (role IN ('user','assistant')),
+    content     TEXT NOT NULL,
+    mode        TEXT NOT NULL DEFAULT 'chat',
+    subject     TEXT,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Tagesberichte (07:00-Uhr-Begrüßung)
 CREATE TABLE IF NOT EXISTS briefings (
     date        TEXT PRIMARY KEY,
@@ -62,7 +72,7 @@ CREATE TABLE IF NOT EXISTS briefings (
 """
 
 DEFAULT_SETTINGS = {
-    "user_name": "",
+    "user_name": "Noah",
     "class_name": "BG11d",
     "daily_minutes": "120",      # verfügbare Lernzeit pro Tag
     "session_minutes": "45",     # Länge eines Lernblocks

@@ -70,7 +70,8 @@ function hero(d) {
       ? h('div', { class: 'next-exam' },
           h('div', {}, h('span', { class: 'label' }, 'Nächste Klausur'), h('span', { class: 'value' }, e.subject)),
           h('div', {}, h('span', { class: 'label' }, 'Datum'), h('span', { class: 'value' }, dateShort(e.date))),
-          h('div', {}, h('span', { class: 'label' }, 'Uhrzeit'), h('span', { class: 'value' }, e.time ? `${e.time} Uhr` : 'unbekannt')))
+          h('div', {}, h('span', { class: 'label' }, 'Uhrzeit'), h('span', { class: 'value' }, e.time ? `${e.time} Uhr` : 'unbekannt')),
+          h('a', { class: 'btn primary hero-cta', href: '#/chat' }, '🎯 Mit JARVIS lernen'))
       : h('a', { class: 'btn primary', href: '#/exams' }, '+ Klausur hinzufügen'),
   );
 

@@ -34,6 +34,8 @@ class Settings:
     tz: ZoneInfo
     db_path: Path
     anthropic_api_key: str | None
+    ai_model: str
+    ai_effort: str
 
     @property
     def ai_enabled(self) -> bool:
@@ -50,6 +52,8 @@ def load_settings() -> Settings:
         tz=ZoneInfo(os.environ.get("JARVIS_TZ", "Europe/Berlin")),
         db_path=db,
         anthropic_api_key=os.environ.get("ANTHROPIC_API_KEY") or None,
+        ai_model=os.environ.get("JARVIS_AI_MODEL", "claude-opus-5-5"),
+        ai_effort=os.environ.get("JARVIS_AI_EFFORT", "low"),
     )
 
 

@@ -11,7 +11,7 @@ Alle Daten liegen in einer SQLite-Datenbank auf deinem Computer und bleiben nach
 | 3 | Dashboard (Begrüßung, Countdown, Aufgaben, Fortschritt, Woche), Klausuren verwalten, Einstellungen | ✅ |
 | 4 | Klausurplan-Import (PDF, PNG, JPG, Excel) mit Bestätigung | ⏳ |
 | 5 | Automatischer Lernplan | ⏳ |
-| 6 | JARVIS-Chat | ⏳ |
+| 6 | KI-Lernpartner & Chat (Erklären, Abfragen, Karteikarten, Lernzettel) | ✅ |
 | 7 | Tagesbericht um 07:00 Uhr mit Benachrichtigung | ⏳ |
 
 ## Voraussetzungen
@@ -54,6 +54,24 @@ Beenden mit `Strg + C`. Deine Daten liegen in `data/jarvis.db`.
 **Auf dem Smartphone:** Setze in `.env` `JARVIS_HOST=0.0.0.0` und öffne auf dem Handy (im selben WLAN)
 `http://<IP-deines-Computers>:8765`. Mach das nur in einem vertrauenswürdigen Netzwerk, denn die App hat keine Anmeldung.
 
+## KI-Lernpartner einrichten
+
+Unter **KI-Lernen** kannst du mit JARVIS lernen:
+
+- 💬 **Fragen:** freie Fragen, auch zu deinen Klausuren („Was muss ich heute lernen?“)
+- 📘 **Erklären:** ein Thema Schritt für Schritt mit Beispiel und Verständnisfrage
+- 🎯 **Abfragen:** Quiz mit einer Frage nach der anderen, mit Feedback und Auswertung
+- 🧠 **Karteikarten** und 📝 **Lernzettel** zu einem Thema
+
+So schaltest du die KI frei:
+
+1. Lege unter https://console.anthropic.com einen API-Schlüssel an. Die Nutzung kostet Geld und wird pro Anfrage abgerechnet, also frag am besten deine Eltern.
+2. Trage ihn in die Datei `.env` ein: `ANTHROPIC_API_KEY=sk-ant-...`
+3. Starte JARVIS neu.
+
+Ohne Schlüssel läuft JARVIS im **Offline-Modus** und beantwortet dann nur Fragen zu deinen gespeicherten Klausuren,
+Aufgaben und deinem Fortschritt. Der Chatverlauf wird in der Datenbank gespeichert.
+
 ## Konfiguration (`.env`)
 
 | Variable | Standard | Bedeutung |
@@ -62,7 +80,9 @@ Beenden mit `Strg + C`. Deine Daten liegen in `data/jarvis.db`.
 | `JARVIS_PORT` | `8765` | Port |
 | `JARVIS_TZ` | `Europe/Berlin` | Zeitzone für „heute“ und den Tagesbericht |
 | `JARVIS_DB_PATH` | `data/jarvis.db` | Speicherort der Datenbank |
-| `ANTHROPIC_API_KEY` | – | optional, für Chat und Bilderkennung (ab Schritt 4/6) |
+| `ANTHROPIC_API_KEY` | – | Schlüssel für den KI-Lernpartner (optional) |
+| `JARVIS_AI_MODEL` | `claude-opus-5-5` | verwendetes KI-Modell |
+| `JARVIS_AI_EFFORT` | `low` | Denkaufwand: `low`, `medium` oder `high` (höher = gründlicher, aber langsamer und teurer) |
 
 API-Schlüssel stehen **nur** in `.env` bzw. in Umgebungsvariablen. `.env` wird nicht ins Git-Repository eingecheckt.
 

@@ -2,10 +2,12 @@ import { api } from './api.js';
 import { renderDashboard } from './dashboard.js';
 import { renderExams } from './exams.js';
 import { renderSettings } from './settings.js';
+import { renderChat } from './chat.js';
 
 const VIEWS = {
   dashboard: { title: 'Dashboard', eyebrow: 'Systemübersicht', render: renderDashboard },
   exams: { title: 'Klausuren', eyebrow: 'Termine verwalten', render: renderExams },
+  chat: { title: 'KI-Lernpartner', eyebrow: 'Lernen mit JARVIS', render: renderChat },
   settings: { title: 'Einstellungen', eyebrow: 'Konfiguration', render: renderSettings },
 };
 

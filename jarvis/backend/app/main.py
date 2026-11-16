@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .config import FRONTEND_DIR, settings
 from .db import init_db
-from .routers import dashboard, exams, settings as settings_router, tasks
+from .routers import chat, dashboard, exams, settings as settings_router, tasks
 
 
 @asynccontextmanager
@@ -42,7 +42,7 @@ async def security_headers(request: Request, call_next):
     return response
 
 
-for r in (dashboard.router, exams.router, tasks.router, settings_router.router):
+for r in (dashboard.router, exams.router, tasks.router, settings_router.router, chat.router):
     app.include_router(r)
 
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
